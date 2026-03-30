@@ -18,7 +18,7 @@ async function bootstrap() {
     )
     .setVersion('1.0.0')
     .addServer('http://localhost:3000', 'Local Development')
-    .addServer('https://api.example.com', 'Production')
+    .addServer('https://testt.icss.com.vn', 'Production')
     .addTag('Machines', 'Industrial machines CRUD & status control')
     .addTag('Sensor Readings', 'Machine sensor data (temperature, vibration, power, etc.)')
     .addTag('Maintenance Records', 'Maintenance history & scheduling')
