@@ -1,0 +1,1300 @@
+openapi: 3.0.0
+info:
+  title: Smart Building & Industrial IoT API
+  description: |
+    Unified API for Industrial IoT machine monitoring and Smart Building environmental sensing.
+    
+    **Data Sources:**
+    - Machines module: Based on synthetic industrial IoT dataset (temps, vibration, power, maintenance)
+    - Rooms module: Based on KETI Smart Building dataset (CO2, humidity, luminosity, PIR occupancy)
+    
+    **Base URL:** `http://localhost:3000`
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://github.com/your-org/simulated-smartbuilding-api
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://api.example.com
+    description: Production
+
+paths:
+  # ============================================================================
+  # MACHINES MODULE
+  # ============================================================================
+  /api/v1/machines:
+    post:
+      tags:
+        - Machines
+      summary: Create a new machine
+      operationId: createMachine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMachineRequest'
+      responses:
+        '201':
+          description: Machine created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+              examples:
+                success:
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    machineCode: "CNC_MILL_001"
+                    machineType: "CNC_MILL"
+                    locationZone: "Zone A"
+                    floorNumber: 4
+                    installDate: "2024-01-15"
+                    isActive: true
+                    totalRuntimeHours: 0
+                    totalCycleCount: 0
+                    remainingUsefulLifeDays: 3650
+                    failureWithin7Days: false
+                    createdAt: "2026-03-23T12:00:00Z"
+                    updatedAt: "2026-03-23T12:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Machines
+      summary: List all machines (paginated, filterable)
+      operationId: listMachines
+      parameters:
+        - name: machineType
+          in: query
+          description: Filter by machine type (e.g., CNC_MILL, FURNACE)
+          schema:
+            $ref: '#/components/schemas/MachineType'
+        - name: locationZone
+          in: query
+          description: Filter by location zone (e.g., Zone A, Zone B)
+          schema:
+            type: string
+        - name: floorNumber
+          in: query
+          description: Filter by floor (1–20)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+        - name: page
+          in: query
+          description: Page number (default 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page (default 20)
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of machines
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachineListResponse'
+              examples:
+                success:
+                  value:
+                    data:
+                      - id: "550e8400-e29b-41d4-a716-446655440000"
+                        machineCode: "CNC_MILL_001"
+                        machineType: "CNC_MILL"
+                        locationZone: "Zone A"
+                        floorNumber: 4
+                    total: 25
+                    page: 1
+                    limit: 20
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/machines/{id}:
+    get:
+      tags:
+        - Machines
+      summary: Get machine by ID
+      operationId: getMachine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Machine UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Machine details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/machines/{id}/activate:
+    patch:
+      tags:
+        - Machines
+      summary: Activate a machine
+      operationId: activateMachine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Machine UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Machine activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/machines/{id}/deactivate:
+    patch:
+      tags:
+        - Machines
+      summary: Deactivate a machine
+      operationId: deactivateMachine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Machine UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Machine deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # SENSOR READINGS MODULE (Machines)
+  # ============================================================================
+  /api/v1/machines/{machineId}/readings:
+    get:
+      tags:
+        - Sensor Readings
+      summary: Get paginated historical sensor readings for a machine
+      operationId: getMachineReadings
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          description: Machine UUID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: startTime
+          in: query
+          description: ISO 8601 start timestamp
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          description: ISO 8601 end timestamp
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Paginated readings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorReadingListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/machines/{machineId}/readings/latest:
+    get:
+      tags:
+        - Sensor Readings
+      summary: Get most recent persisted sensor reading
+      operationId: getLatestMachineReading
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Latest reading
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorReading'
+              examples:
+                success:
+                  value:
+                    id: "660e8400-e29b-41d4-a716-446655440001"
+                    machineId: "550e8400-e29b-41d4-a716-446655440000"
+                    timestamp: "2026-03-23T12:30:45Z"
+                    temperatureC: 45.2
+                    vibrationMs2: 3.5
+                    soundDb: 78.9
+                    powerKw: 12.5
+                    oilLevelPct: 85.0
+                    coolantLevelPct: 90.0
+                    laserIntensityW: null
+                    hydraulicPressureBar: null
+                    spindleSpeedRpm: 2500
+                    toolWearMm: 0.15
+                    pressureBar: null
+                    flowRateLMin: null
+                    runtimeHours: 1250.5
+                    cycleCount: 5432
+                    isAnomaly: false
+                    remainingUsefulLifeDays: 245
+                    failureWithin7Days: false
+                    createdAt: "2026-03-23T12:30:45Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/machines/{machineId}/readings/live:
+    get:
+      tags:
+        - Sensor Readings
+      summary: Get live simulated reading (not persisted)
+      operationId: getLiveMachineReading
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Live simulated reading
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorReading'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/machines/{machineId}/readings/generate:
+    post:
+      tags:
+        - Sensor Readings
+      summary: Generate and save N simulated readings
+      operationId: generateMachineReadings
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReadingsRequest'
+      responses:
+        '201':
+          description: Readings generated and saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 100
+                  interval:
+                    type: number
+                    example: 10
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/sensor-readings/anomalies:
+    get:
+      tags:
+        - Sensor Readings
+      summary: Get all anomalous readings across all machines
+      operationId: getAnomalies
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+      responses:
+        '200':
+          description: Anomalous readings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorReadingListResponse'
+
+  # ============================================================================
+  # MAINTENANCE RECORDS MODULE
+  # ============================================================================
+  /api/v1/machines/{machineId}/maintenance:
+    post:
+      tags:
+        - Maintenance Records
+      summary: Create maintenance record
+      operationId: createMaintenanceRecord
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMaintenanceRecordRequest'
+      responses:
+        '201':
+          description: Maintenance record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceRecord'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Maintenance Records
+      summary: Get maintenance records for a machine
+      operationId: getMachineMaintenanceRecords
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+      responses:
+        '200':
+          description: List of maintenance records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceRecordListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/machines/{machineId}/maintenance/{recordId}:
+    get:
+      tags:
+        - Maintenance Records
+      summary: Get a specific maintenance record
+      operationId: getMaintenanceRecord
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Maintenance record details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceRecord'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # ROOMS MODULE
+  # ============================================================================
+  /api/v1/rooms:
+    post:
+      tags:
+        - Rooms
+      summary: Create a new room
+      operationId: createRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+      responses:
+        '201':
+          description: Room created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+              examples:
+                success:
+                  value:
+                    id: "770e8400-e29b-41d4-a716-446655440002"
+                    roomCode: "413"
+                    floorNumber: 4
+                    locationZone: "Wing A"
+                    areaM2: 28.0
+                    roomType: "OFFICE"
+                    isActive: true
+                    createdAt: "2026-03-23T12:00:00Z"
+                    updatedAt: "2026-03-23T12:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags:
+        - Rooms
+      summary: List all rooms (paginated, filterable)
+      operationId: listRooms
+      parameters:
+        - name: floorNumber
+          in: query
+          description: Filter by floor
+          schema:
+            type: integer
+        - name: roomType
+          in: query
+          description: Filter by room type
+          schema:
+            $ref: '#/components/schemas/RoomType'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+      responses:
+        '200':
+          description: List of rooms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomListResponse'
+
+  /api/v1/rooms/{id}:
+    get:
+      tags:
+        - Rooms
+      summary: Get room by ID
+      operationId: getRoom
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Room details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # ENVIRONMENT SENSOR READINGS MODULE
+  # ============================================================================
+  /api/v1/rooms/{roomId}/env-readings:
+    get:
+      tags:
+        - Environmental Readings
+      summary: Get paginated historical environmental readings for a room
+      operationId: getRoomEnvReadings
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: startTime
+          in: query
+          description: ISO 8601 start timestamp
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          description: ISO 8601 end timestamp
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Paginated environmental readings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvSensorReadingListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/rooms/{roomId}/env-readings/latest:
+    get:
+      tags:
+        - Environmental Readings
+      summary: Get latest environmental reading for a room
+      operationId: getLatestRoomEnvReading
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Latest reading
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvSensorReading'
+              examples:
+                success:
+                  value:
+                    id: "880e8400-e29b-41d4-a716-446655440003"
+                    roomId: "770e8400-e29b-41d4-a716-446655440002"
+                    timestamp: "2026-03-23T14:30:15Z"
+                    co2Ppm: 876.29
+                    humidityPct: 43.99
+                    temperatureC: 24.16
+                    luminosityLux: 364.6
+                    pirValue: 0
+                    isOccupied: false
+                    createdAt: "2026-03-23T14:30:15Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/rooms/{roomId}/env-readings/live:
+    get:
+      tags:
+        - Environmental Readings
+      summary: Get live simulated environmental reading (not persisted)
+      operationId: getLiveRoomEnvReading
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Live simulated reading
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvSensorReading'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/rooms/{roomId}/env-readings/generate:
+    post:
+      tags:
+        - Environmental Readings
+      summary: Generate and save N environmental readings for a room
+      operationId: generateRoomEnvReadings
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateEnvReadingsRequest'
+      responses:
+        '201':
+          description: Readings generated and saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 100
+                  interval:
+                    type: number
+                    example: 5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/env-readings/snapshot:
+    get:
+      tags:
+        - Environmental Readings
+      summary: Get latest environmental reading for all rooms (dashboard snapshot)
+      operationId: getEnvSnapshot
+      responses:
+        '200':
+          description: Latest readings for all active rooms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EnvSensorReading'
+                example:
+                  data:
+                    - id: "880e8400-e29b-41d4-a716-446655440003"
+                      roomId: "770e8400-e29b-41d4-a716-446655440002"
+                      timestamp: "2026-03-23T14:30:15Z"
+                      co2Ppm: 876.29
+                      humidityPct: 43.99
+                      temperatureC: 24.16
+                      luminosityLux: 364.6
+                      pirValue: 0
+                      isOccupied: false
+
+  /api/v1/env-readings/occupied:
+    get:
+      tags:
+        - Environmental Readings
+      summary: Get environmental readings from occupied rooms (PIR detected)
+      operationId: getOccupiedRooms
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+      responses:
+        '200':
+          description: Readings from occupied rooms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvSensorReadingListResponse'
+
+  /api/v1/env-readings/high-co2:
+    get:
+      tags:
+        - Environmental Readings
+      summary: Get rooms with high CO2 levels (alert endpoint)
+      operationId: getHighCo2Rooms
+      parameters:
+        - name: threshold
+          in: query
+          description: CO2 threshold in ppm (default 1000)
+          schema:
+            type: number
+            default: 1000
+      responses:
+        '200':
+          description: Rooms exceeding CO2 threshold
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EnvSensorReading'
+
+components:
+  schemas:
+    # ========================================================================
+    # ENUMS
+    # ========================================================================
+    MachineType:
+      type: string
+      enum:
+        - CNC_MILL
+        - FURNACE
+        - ROBOT_ARM
+        - LASER_CUTTER
+        - HYDRAULIC_PRESS
+        - COMPRESSOR
+        - CONVEYOR
+        - PUMP
+        - TURBINE
+        - WELDER
+        - THREE_D_PRINTER
+        - INJECTION_MOLD
+      description: Industrial machine types
+
+    MaintenanceType:
+      type: string
+      enum:
+        - ROUTINE
+        - CORRECTIVE
+        - PREDICTIVE
+      description: Maintenance record type
+
+    RoomType:
+      type: string
+      enum:
+        - OFFICE
+        - LAB
+        - CONFERENCE
+        - CORRIDOR
+        - UTILITY
+      description: Room classification
+
+    # ========================================================================
+    # REQUEST SCHEMAS
+    # ========================================================================
+    CreateMachineRequest:
+      type: object
+      required:
+        - machineCode
+        - machineType
+        - locationZone
+        - floorNumber
+        - installDate
+      properties:
+        machineCode:
+          type: string
+          description: Business identifier (e.g., "CNC_MILL_001")
+          example: CNC_MILL_001
+        machineType:
+          $ref: '#/components/schemas/MachineType'
+        locationZone:
+          type: string
+          description: Location zone (e.g., "Zone A", "Zone B")
+          example: Zone A
+        floorNumber:
+          type: integer
+          minimum: 1
+          maximum: 20
+          example: 4
+        installDate:
+          type: string
+          format: date
+          description: ISO 8601 date format
+          example: "2024-01-15"
+
+    CreateRoomRequest:
+      type: object
+      required:
+        - roomCode
+        - floorNumber
+      properties:
+        roomCode:
+          type: string
+          maxLength: 20
+          description: Unique room identifier (e.g., "413", "621A")
+          example: "413"
+        floorNumber:
+          type: integer
+          minimum: 1
+          maximum: 20
+          example: 4
+        locationZone:
+          type: string
+          description: Wing or zone (e.g., "Wing A")
+          example: "Wing A"
+        areaM2:
+          type: number
+          minimum: 1
+          description: Approximate area in square meters
+          example: 28.5
+        roomType:
+          $ref: '#/components/schemas/RoomType'
+
+    GenerateReadingsRequest:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 1
+          maximum: 2000
+          default: 1
+          description: Number of readings to generate
+          example: 100
+        intervalSec:
+          type: number
+          minimum: 1
+          default: 10
+          description: Simulated interval between readings in seconds
+          example: 10
+
+    GenerateEnvReadingsRequest:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 1
+          maximum: 2000
+          default: 1
+          description: Number of readings to generate
+          example: 100
+        intervalSec:
+          type: number
+          minimum: 1
+          default: 5
+          description: "Simulated interval between readings in seconds (typical dataset: 5s)"
+          example: 5
+
+    CreateMaintenanceRecordRequest:
+      type: object
+      required:
+        - maintenanceType
+        - performedAt
+      properties:
+        maintenanceType:
+          $ref: '#/components/schemas/MaintenanceType'
+        notes:
+          type: string
+          description: Optional notes about the maintenance
+          example: "Replaced oil filter and checked hydraulic pressure"
+        performedAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when maintenance was performed
+          example: "2026-03-23T10:30:00Z"
+
+    # ========================================================================
+    # RESPONSE SCHEMAS
+    # ========================================================================
+    Machine:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        machineCode:
+          type: string
+        machineType:
+          $ref: '#/components/schemas/MachineType'
+        locationZone:
+          type: string
+        floorNumber:
+          type: integer
+        installDate:
+          type: string
+          format: date
+        isActive:
+          type: boolean
+        totalRuntimeHours:
+          type: number
+          description: Cumulative runtime in hours
+        totalCycleCount:
+          type: integer
+          description: Total machine cycles
+        remainingUsefulLifeDays:
+          type: number
+          nullable: true
+          description: Estimated remaining operational life
+        failureWithin7Days:
+          type: boolean
+          description: Predictive failure flag
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MachineListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Machine'
+        total:
+          type: integer
+          description: Total count of machines
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    SensorReading:
+      type: object
+      description: Industrial machine sensor reading (temperature, vibration, power, etc.)
+      properties:
+        id:
+          type: string
+          format: uuid
+        machineId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        temperatureC:
+          type: number
+          description: Temperature in Celsius
+        vibrationMs2:
+          type: number
+          description: Vibration in mm/s²
+        soundDb:
+          type: number
+          description: Sound level in decibels
+        powerKw:
+          type: number
+          description: Power consumption in kilowatts
+        oilLevelPct:
+          type: number
+          description: Oil level 0–100%
+        coolantLevelPct:
+          type: number
+          nullable: true
+          description: Coolant level (null if not applicable)
+        laserIntensityW:
+          type: number
+          nullable: true
+          description: Laser intensity (only for LASER_CUTTER)
+        hydraulicPressureBar:
+          type: number
+          nullable: true
+          description: Hydraulic pressure (HYDRAULIC_PRESS, INJECTION_MOLD)
+        spindleSpeedRpm:
+          type: number
+          nullable: true
+          description: Spindle speed (CNC machines)
+        toolWearMm:
+          type: number
+          nullable: true
+          description: Tool wear in millimeters
+        pressureBar:
+          type: number
+          nullable: true
+          description: System pressure
+        flowRateLMin:
+          type: number
+          nullable: true
+          description: Flow rate in liters per minute
+        runtimeHours:
+          type: number
+          description: Machine runtime at this reading
+        cycleCount:
+          type: integer
+          description: Cumulative cycles
+        isAnomaly:
+          type: boolean
+          description: Detected anomaly flag
+        remainingUsefulLifeDays:
+          type: number
+          nullable: true
+        failureWithin7Days:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    SensorReadingListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorReading'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        roomCode:
+          type: string
+          description: Unique room identifier (e.g., "413", "621A")
+        floorNumber:
+          type: integer
+        locationZone:
+          type: string
+          description: Wing or zone designation
+        areaM2:
+          type: number
+          description: Room area in square meters
+        roomType:
+          $ref: '#/components/schemas/RoomType'
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RoomListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Room'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    EnvSensorReading:
+      type: object
+      description: Room environmental sensor reading (CO2, humidity, temperature, luminosity, occupancy)
+      properties:
+        id:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        co2Ppm:
+          type: number
+          description: "CO2 concentration in parts per million (typical: 400–5000 ppm)"
+        humidityPct:
+          type: number
+          description: Relative humidity 0–100%
+        temperatureC:
+          type: number
+          description: Room air temperature in Celsius
+        luminosityLux:
+          type: number
+          description: Illuminance in lux
+        pirValue:
+          type: number
+          description: PIR sensor value (0 = empty, >0 = occupancy detected, ~6% of readings)
+        isOccupied:
+          type: boolean
+          description: Derived occupancy flag (convenience field)
+        createdAt:
+          type: string
+          format: date-time
+
+    EnvSensorReadingListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvSensorReading'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    MaintenanceRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        machineId:
+          type: string
+          format: uuid
+        maintenanceType:
+          $ref: '#/components/schemas/MaintenanceType'
+        notes:
+          type: string
+          nullable: true
+        performedAt:
+          type: string
+          format: date-time
+        performedBy:
+          type: string
+          nullable: true
+        nextScheduledDate:
+          type: string
+          format: date-time
+          nullable: true
+        failureFixed:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    MaintenanceRecordListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceRecord'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ========================================================================
+    # ERROR SCHEMAS
+    # ========================================================================
+    Error:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request (validation error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            statusCode: 400
+            message: "Validation failed"
+            error: "Bad Request"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            statusCode: 404
+            message: "Machine not found"
+            error: "Not Found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            statusCode: 500
+            message: "Internal server error"
+            error: "Internal Server Error"
+
+tags:
+  - name: Machines
+    description: Industrial machines management (CRUD + status control)
+  - name: Sensor Readings
+    description: Machine sensor data (temperature, vibration, power, etc.)
+  - name: Maintenance Records
+    description: Maintenance history and scheduling
+  - name: Rooms
+    description: Building rooms management (CRUD)
+  - name: Environmental Readings
+    description: Environmental sensors (CO2, humidity, temperature, luminosity, occupancy)

@@ -1,0 +1,446 @@
+{
+  "info": {
+    "_postman_id": "smart-building-api",
+    "name": "Smart Building & Industrial IoT API",
+    "description": "Collection for testing Smart Building and Industrial IoT endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Machines",
+      "item": [
+        {
+          "name": "Create Machine",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"machineCode\": \"CNC_MILL_001\",\n  \"machineType\": \"CNC_MILL\",\n  \"locationZone\": \"Zone A\",\n  \"floorNumber\": 4,\n  \"installDate\": \"2024-01-15\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/v1/machines",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines"]
+            }
+          }
+        },
+        {
+          "name": "List Machines",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/machines?page=1&limit=10",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "machineType",
+                  "value": "CNC_MILL",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Machine",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}"]
+            }
+          }
+        },
+        {
+          "name": "Activate Machine",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/activate",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "activate"]
+            }
+          }
+        },
+        {
+          "name": "Deactivate Machine",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/deactivate",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "deactivate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sensor Readings",
+      "item": [
+        {
+          "name": "Get Machine Readings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/readings?page=1&limit=20",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "readings"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Latest Reading",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/readings/latest",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "readings", "latest"]
+            }
+          }
+        },
+        {
+          "name": "Get Live Reading (ephemeral)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/readings/live",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "readings", "live"]
+            }
+          }
+        },
+        {
+          "name": "Generate Readings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"count\": 100,\n  \"intervalSec\": 10\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/readings/generate",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "readings", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Get Anomalies",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/sensor-readings/anomalies?page=1&limit=20",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "sensor-readings", "anomalies"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Maintenance Records",
+      "item": [
+        {
+          "name": "Create Maintenance Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maintenanceType\": \"ROUTINE\",\n  \"notes\": \"Regular maintenance check\",\n  \"performedAt\": \"2026-03-23T10:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/maintenance",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "maintenance"]
+            }
+          }
+        },
+        {
+          "name": "Get Maintenance Records",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/maintenance?page=1&limit=20",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "maintenance"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Maintenance Record",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/machines/{{machineId}}/maintenance/{{recordId}}",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "machines", "{{machineId}}", "maintenance", "{{recordId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rooms",
+      "item": [
+        {
+          "name": "Create Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomCode\": \"413\",\n  \"floorNumber\": 4,\n  \"locationZone\": \"Wing A\",\n  \"areaM2\": 28,\n  \"roomType\": \"OFFICE\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/v1/rooms",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "List Rooms",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/rooms?page=1&limit=20",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "rooms"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "floorNumber",
+                  "value": "4",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Room",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/rooms/{{roomId}}",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "rooms", "{{roomId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Environmental Readings",
+      "item": [
+        {
+          "name": "Get Room Env Readings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/rooms/{{roomId}}/env-readings?page=1&limit=20",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "rooms", "{{roomId}}", "env-readings"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Latest Env Reading",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/rooms/{{roomId}}/env-readings/latest",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "rooms", "{{roomId}}", "env-readings", "latest"]
+            }
+          }
+        },
+        {
+          "name": "Get Live Env Reading (ephemeral)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/rooms/{{roomId}}/env-readings/live",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "rooms", "{{roomId}}", "env-readings", "live"]
+            }
+          }
+        },
+        {
+          "name": "Generate Env Readings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"count\": 100,\n  \"intervalSec\": 5\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/v1/rooms/{{roomId}}/env-readings/generate",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "rooms", "{{roomId}}", "env-readings", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Get Env Snapshot (all rooms)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/env-readings/snapshot",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "env-readings", "snapshot"]
+            }
+          }
+        },
+        {
+          "name": "Get Occupied Rooms",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/env-readings/occupied?page=1&limit=20",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "env-readings", "occupied"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get High CO2 Rooms",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}/api/v1/env-readings/high-co2?threshold=1000",
+              "host": ["{{host}}"],
+              "path": ["api", "v1", "env-readings", "high-co2"],
+              "query": [
+                {
+                  "key": "threshold",
+                  "value": "1000"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "host",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "machineId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "roomId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recordId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
