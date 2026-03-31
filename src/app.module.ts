@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { MachinesModule } from './machines/machines.module';
@@ -21,6 +23,8 @@ import { EnvSensorReadingsModule } from './env-sensor-readings/env-sensor-readin
     RoomsModule,
     EnvSensorReadingsModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
 
